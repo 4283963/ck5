@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空矿工 - Space Miner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="stars"></div>
+
+    <div id="game-container">
+        <div id="login-screen" class="screen active">
+            <h1 class="pixel-title">★ 太空矿工 ★</h1>
+            <p class="subtitle">SPACE MINER</p>
+            <div class="login-box">
+                <label for="username">输入宇航员代号：</label>
+                <input type="text" id="username" maxlength="20" placeholder="ASTRO_001">
+                <button id="login-btn" class="pixel-btn">▶ 登 录</button>
+            </div>
+            <p class="tip">提示：挖矿消耗燃料，矿石可以升级货舱</p>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div class="header">
+                <span class="player-name" id="player-name">ASTRO_001</span>
+                <span class="status-dot" id="connection-dot"></span>
+            </div>
+
+            <div class="ship-panel">
+                <h2 class="panel-title">⛭ 船舱状态</h2>
+
+                <div class="stat-row">
+                    <span class="stat-label">⛏ 矿石</span>
+                    <div class="stat-bar-wrap">
+                        <div class="stat-bar ore-bar" id="ore-bar"></div>
+                    </div>
+                    <span class="stat-value" id="ore-value">0 / 100</span>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-label">⛽ 燃料</span>
+                    <div class="stat-bar-wrap">
+                        <div class="stat-bar fuel-bar" id="fuel-bar"></div>
+                    </div>
+                    <span class="stat-value" id="fuel-value">100 / 100</span>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-label">💨 氧气</span>
+                    <div class="stat-bar-wrap">
+                        <div class="stat-bar oxygen-bar" id="oxygen-bar"></div>
+                    </div>
+                    <span class="stat-value" id="oxygen-value">100 / 100</span>
+                </div>
+
+                <div class="stat-row">
+                    <span class="stat-label">📦 货舱</span>
+                    <span class="stat-value big" id="cargo-value">100</span>
+                </div>
+            </div>
+
+            <div class="mining-panel">
+                <h2 class="panel-title">⚡ 采矿控制</h2>
+                <button id="mining-btn" class="pixel-btn big-btn mining-btn">▶ 开始挖矿</button>
+                <p class="mining-status" id="mining-status">系统待机中...</p>
+            </div>
+
+            <div class="shop-panel">
+                <h2 class="panel-title">🛒 船舱商店</h2>
+                <div class="shop-item">
+                    <span>补充燃料 (+20)</span>
+                    <button id="refuel-btn" class="pixel-btn small-btn" data-cost="10">10矿石</button>
+                </div>
+                <div class="shop-item">
+                    <span>升级货舱 (+50)</span>
+                    <button id="upgrade-btn" class="pixel-btn small-btn">?矿石</button>
+                </div>
+            </div>
+
+            <div class="log-panel">
+                <h2 class="panel-title">📡 通讯日志</h2>
+                <div id="log-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="game.js"></script>
+</body>
+</html>
