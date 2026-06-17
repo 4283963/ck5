@@ -4,14 +4,22 @@ import logging
 import websockets
 from websockets.server import WebSocketServerProtocol
 
-from database import init_db, get_player, create_player, update_player
+from database import (
+    init_db,
+    get_player,
+    create_player,
+    update_player,
+    upgrade_cargo,
+    refuel,
+    mining_tick,
+    close_conn,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("space_miner")
 
 MINING_ORE_PER_SECOND = 2
 FUEL_PER_SECOND = 1
-OXYGEN_PER_SECOND = 0
 
 connected_clients = {}
 mining_players = set()
@@ -53,33 +61,13 @@ async def broadcast_mining_update(username):
 def tick_mining():
     to_remove = []
     for username in list(mining_players):
-        player = get_player(username)
+        player = mining_tick(username, MINING_ORE_PER_SECOND, FUEL_PER_SECOND)
         if not player:
             to_remove.append(username)
             continue
 
-        if player["fuel"] <= 0:
-            player["mining"] = 0
-            mining_players.discard(username)
-            update_player(username, mining=0)
-            continue
-
-        new_ore = min(player["ore"] + MINING_ORE_PER_SECOND, player["max_cargo"])
-        new_fuel = max(player["fuel"] - FUEL_PER_SECOND, 0)
-
-        ore_added = new_ore - player["ore"]
-        if ore_added < MINING_ORE_PER_SECOND and player["ore"] < player["max_cargo"]:
-            pass
-
-        update_player(
-            username,
-            ore=new_ore,
-            fuel=new_fuel,
-            mining=1 if new_fuel > 0 else 0,
-        )
-
-        if new_fuel <= 0:
-            mining_players.discard(username)
+        if not player["mining"]:
+            to_remove.append(username)
 
     for username in to_remove:
         mining_players.discard(username)
@@ -137,54 +125,34 @@ async def handle_message(websocket, message):
                 "message": "Out of fuel!",
             }))
             return
-        update_player(username, mining=1)
+        player = update_player(username, mining=1)
         mining_players.add(username)
-        await send_state(websocket, get_player(username))
+        await send_state(websocket, player)
 
     elif msg_type == "stop_mining":
-        update_player(username, mining=0)
+        player = update_player(username, mining=0)
         mining_players.discard(username)
-        await send_state(websocket, get_player(username))
+        await send_state(websocket, player)
 
     elif msg_type == "refuel":
-        player = get_player(username)
-        if not player:
-            return
-        cost = 10
-        fuel_add = 20
-        if player["ore"] < cost:
+        player, err = refuel(username)
+        if err:
             await websocket.send(json.dumps({
                 "type": "error",
-                "message": "Not enough ore to refuel!",
+                "message": err,
             }))
             return
-        new_fuel = min(player["fuel"] + fuel_add, 100)
-        actual_add = new_fuel - player["fuel"]
-        actual_cost = int(actual_add * (cost / fuel_add))
-        update_player(
-            username,
-            ore=player["ore"] - actual_cost,
-            fuel=new_fuel,
-        )
-        await send_state(websocket, get_player(username))
+        await send_state(websocket, player)
 
     elif msg_type == "upgrade_cargo":
-        player = get_player(username)
-        if not player:
-            return
-        cost = player["max_cargo"]
-        if player["ore"] < cost:
+        player, err = upgrade_cargo(username)
+        if err:
             await websocket.send(json.dumps({
                 "type": "error",
-                "message": f"Need {cost} ore to upgrade cargo!",
+                "message": err,
             }))
             return
-        update_player(
-            username,
-            ore=player["ore"] - cost,
-            max_cargo=player["max_cargo"] + 50,
-        )
-        await send_state(websocket, get_player(username))
+        await send_state(websocket, player)
 
     elif msg_type == "get_state":
         player = get_player(username)
@@ -219,4 +187,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    finally:
+        close_conn()
