@@ -10,8 +10,12 @@ from database import (
     create_player,
     update_player,
     upgrade_cargo,
-    refuel,
+    refuel_with_ore,
     mining_tick,
+    get_market_orders,
+    get_market_expiry,
+    refresh_market_orders,
+    execute_market_trade,
     close_conn,
 )
 
@@ -20,9 +24,11 @@ logger = logging.getLogger("space_miner")
 
 MINING_ORE_PER_SECOND = 2
 FUEL_PER_SECOND = 1
+MARKET_REFRESH_INTERVAL = 300
 
 connected_clients = {}
 mining_players = set()
+market_expiry = 0
 
 
 def sanitize_player(player):
@@ -33,7 +39,17 @@ def sanitize_player(player):
         "max_cargo": player["max_cargo"],
         "oxygen": player["oxygen"],
         "max_oxygen": player["max_oxygen"],
+        "credits": player["credits"],
         "mining": bool(player["mining"]),
+    }
+
+
+def get_market_state():
+    orders = get_market_orders()
+    expiry = get_market_expiry()
+    return {
+        "orders": orders,
+        "expires_at": expiry,
     }
 
 
@@ -43,6 +59,24 @@ async def send_state(websocket, player):
         "player": sanitize_player(player),
     }
     await websocket.send(json.dumps(state))
+
+
+async def send_market_state(websocket):
+    market = get_market_state()
+    await websocket.send(json.dumps({
+        "type": "market",
+        "market": market,
+    }))
+
+
+async def broadcast_market_update():
+    market = get_market_state()
+    msg = json.dumps({"type": "market", "market": market})
+    for ws in list(connected_clients.keys()):
+        try:
+            await ws.send(msg)
+        except Exception:
+            pass
 
 
 async def broadcast_mining_update(username):
@@ -81,6 +115,16 @@ async def game_loop():
             asyncio.create_task(broadcast_mining_update(username))
 
 
+async def market_loop():
+    global market_expiry
+    while True:
+        orders, expires = refresh_market_orders(MARKET_REFRESH_INTERVAL)
+        market_expiry = expires
+        logger.info(f"Market refreshed: {len(orders)} orders, expires in {MARKET_REFRESH_INTERVAL}s")
+        asyncio.create_task(broadcast_market_update())
+        await asyncio.sleep(MARKET_REFRESH_INTERVAL)
+
+
 async def handle_message(websocket, message):
     try:
         data = json.loads(message)
@@ -103,6 +147,7 @@ async def handle_message(websocket, message):
         connected_clients[websocket] = name
         logger.info(f"Player logged in: {name}")
         await send_state(websocket, player)
+        await send_market_state(websocket)
 
         if player["mining"]:
             mining_players.add(name)
@@ -135,7 +180,7 @@ async def handle_message(websocket, message):
         await send_state(websocket, player)
 
     elif msg_type == "refuel":
-        player, err = refuel(username)
+        player, err = refuel_with_ore(username)
         if err:
             await websocket.send(json.dumps({
                 "type": "error",
@@ -153,6 +198,29 @@ async def handle_message(websocket, message):
             }))
             return
         await send_state(websocket, player)
+
+    elif msg_type == "get_market":
+        await send_market_state(websocket)
+
+    elif msg_type == "trade":
+        order_id = data.get("order_id")
+        amount = data.get("amount", 1)
+        if not order_id or amount <= 0:
+            await websocket.send(json.dumps({
+                "type": "error",
+                "message": "Invalid trade request",
+            }))
+            return
+        result, err = execute_market_trade(username, order_id, amount)
+        if err:
+            await websocket.send(json.dumps({
+                "type": "error",
+                "message": err,
+            }))
+            return
+        await send_state(websocket, result["player"])
+        await send_market_state(websocket)
+        asyncio.create_task(broadcast_market_update())
 
     elif msg_type == "get_state":
         player = get_player(username)
@@ -180,6 +248,9 @@ async def main():
 
     asyncio.create_task(game_loop())
     logger.info("Game loop started")
+
+    asyncio.create_task(market_loop())
+    logger.info("Market loop started")
 
     async with websockets.serve(handler, "0.0.0.0", 8765):
         logger.info("Server started on ws://0.0.0.0:8765")

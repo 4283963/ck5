@@ -244,6 +244,7 @@ body {
 
 .ship-panel,
 .mining-panel,
+.market-panel,
 .shop-panel,
 .log-panel {
     background: #1a1a3a;
@@ -371,6 +372,160 @@ body {
 .shop-item:last-child {
     border-bottom: none;
     padding-bottom: 0;
+}
+
+.market-panel {
+    border-color: #8040a0;
+    background: #201030;
+    box-shadow:
+        inset -4px -4px 0 #100520,
+        inset 4px 4px 0 #402060,
+        6px 6px 0 rgba(0,0,0,0.5);
+}
+
+.market-panel .panel-title {
+    color: #e080ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.countdown {
+    font-size: 9px;
+    color: #ff80ff;
+    animation: blink 1s infinite;
+}
+
+.market-hint {
+    font-size: 8px;
+    color: #a060c0;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.market-orders {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.market-order {
+    background: #150525;
+    border: 2px solid #603090;
+    padding: 10px;
+    position: relative;
+}
+
+.market-order.buy {
+    border-color: #40a060;
+    background: #052010;
+}
+
+.market-order.sell {
+    border-color: #c04040;
+    background: #200505;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 9px;
+}
+
+.order-type-buy {
+    color: #60ff80;
+}
+
+.order-type-sell {
+    color: #ff8080;
+}
+
+.order-item {
+    color: #e0e0ff;
+}
+
+.order-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8px;
+    color: #a0a0c0;
+    margin-bottom: 8px;
+}
+
+.order-price {
+    color: #ffd700;
+}
+
+.order-remaining {
+    color: #80c0ff;
+}
+
+.order-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.trade-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 8px;
+    font-family: 'Press Start 2P', monospace;
+    color: #fff;
+    background: #8040c0;
+    border: none;
+    cursor: pointer;
+    box-shadow:
+        inset -2px -2px 0 #502080,
+        inset 2px 2px 0 #a060e0;
+    transition: all 0.1s;
+}
+
+.trade-btn.buy {
+    background: #40a060;
+    box-shadow:
+        inset -2px -2px 0 #207040,
+        inset 2px 2px 0 #60c080;
+}
+
+.trade-btn.sell {
+    background: #c04040;
+    box-shadow:
+        inset -2px -2px 0 #902020,
+        inset 2px 2px 0 #e06060;
+}
+
+.trade-btn:hover {
+    filter: brightness(1.1);
+}
+
+.trade-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow:
+        inset 2px 2px 0 #502080,
+        inset -2px -2px 0 #a060e0;
+}
+
+.trade-btn:disabled {
+    background: #404040;
+    cursor: not-allowed;
+    box-shadow:
+        inset -2px -2px 0 #202020,
+        inset 2px 2px 0 #606060;
+    color: #808080;
+}
+
+.credits-display {
+    font-size: 10px;
+    color: #ffd700;
+    margin-right: 12px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
 }
 
 .log-panel {

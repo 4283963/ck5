@@ -18,13 +18,16 @@
                 <input type="text" id="username" maxlength="20" placeholder="ASTRO_001">
                 <button id="login-btn" class="pixel-btn">▶ 登 录</button>
             </div>
-            <p class="tip">提示：挖矿消耗燃料，矿石可以升级货舱</p>
+            <p class="tip">提示：挖矿消耗燃料，矿石可在黑市卖成星币</p>
         </div>
 
         <div id="game-screen" class="screen">
             <div class="header">
                 <span class="player-name" id="player-name">ASTRO_001</span>
-                <span class="status-dot" id="connection-dot"></span>
+                <div class="header-right">
+                    <span class="credits-display">💰 <span id="credits-value">0</span></span>
+                    <span class="status-dot" id="connection-dot"></span>
+                </div>
             </div>
 
             <div class="ship-panel">
@@ -64,6 +67,15 @@
                 <h2 class="panel-title">⚡ 采矿控制</h2>
                 <button id="mining-btn" class="pixel-btn big-btn mining-btn">▶ 开始挖矿</button>
                 <p class="mining-status" id="mining-status">系统待机中...</p>
+            </div>
+
+            <div class="market-panel">
+                <h2 class="panel-title">
+                    👽 黑市商人
+                    <span class="countdown" id="market-countdown">--:--</span>
+                </h2>
+                <p class="market-hint" id="market-hint">商人正在赶来...</p>
+                <div id="market-orders" class="market-orders"></div>
             </div>
 
             <div class="shop-panel">
